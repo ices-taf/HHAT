@@ -1,2 +1,2 @@
-# helcom-hazardous-assessment-tool-
-HELCOM hazardous substances assessment tool
+# OHAT
+OSPAR hazardous substances assessment tool
