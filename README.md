@@ -1,2 +1,2 @@
-# OHAT
-OSPAR hazardous substances assessment tool
+# HHAT
+HHAT hazardous substances assessment tool
