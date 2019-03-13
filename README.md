@@ -1,2 +1,2 @@
 # HHAT
-HHAT hazardous substances assessment tool
+HELCOM hazardous substances assessment tool
