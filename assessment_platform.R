@@ -7,12 +7,13 @@ require(dplyr)
 require(data.table)
 
 series <- commandArgs(trailingOnly = TRUE)[1]
+compartment <- commandArgs(trailingOnly = TRUE)[2]
 
 load("assessment_platform.RData")
 
-render(output_file = paste(gsub(" ", "_", series), ".html", sep = ""),
+render(output_file = paste(gsub(" ", "_", series), "__", gsub(" ", "_", compartment), ".html", sep = ""),
        "assessment platform.Rmd",
        params = list(
-         compartment = "biota",
+         compartment = compartment,
          series = series)
 )

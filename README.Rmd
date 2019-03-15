@@ -3,7 +3,7 @@ title: Hazardous substances assessment tool
 output: github_document
 params:
   compartment: "biota"
-  series: "Denmark Anholt CD Mytilus edulis SB"
+  series: "Denmark ARH170165 CD Mytilus edulis SB"
 ---
 
 As an example, the code in this repository produces an html version of the
