@@ -113,7 +113,7 @@ info_multi <- within(info_multi, {
 ```
 
 
-### Assessment plots {.tabset}
+### Assessment plots and statistical analysis {.tabset}
 
 Will put some introductory text here, including summary information about the time series, including: 
 
@@ -199,16 +199,16 @@ plot.multidata(assessment_object$data, info_multi)
 
 **Trend assessment**
 
-
 ```{r trend_ok, include = FALSE}
 anova <- assessment$anova
 coefficients <- assessment$coefficients
 if (info$detGroup == "Imposex") {
   anova_ok <- !is.null(coefficients) | !is.null(anova)
 } else {
-  anova_ok <- !is.null(anova) & nrow(anova > 1)
+  anova_ok <- !is.null(anova) && nrow(anova) > 1
 }  
 ```
+
 
 ```{asis, eval = !anova_ok}
 Insufficient data
@@ -221,7 +221,6 @@ Insufficient data
 ```{r, eval = anova_ok & info$detGroup == "Imposex", child = "assessment platform trend imposex.Rmd"}
 ```
 
-
 <br>
 
 **Status assessment**
@@ -233,11 +232,11 @@ if (info$detGroup == "Imposex") {
   nyear_ok <- !is.na(nyear)    
 } else {
   nyear <- assessment$summary$nyfit
-  nyear_ok <- !is.null(nyear) & nyear >= 3
+  nyear_ok <- !is.null(nyear) && nyear >= 3
 }
 
 AC_ok <- !all(is.na(assessment$AC))
-status_ok <- nyear_ok & AC_ok
+status_ok <- nyear_ok && AC_ok
 
 if (!nyear_ok) {
   status_txt <- "Insufficient data"
