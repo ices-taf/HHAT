@@ -84,8 +84,7 @@ HQS     186.162   137.28 -0.3045947 0.05604806 -5.434527 0.9985693
 
 ### how to build this file
 
-this file was created using (requires access to
-`assessment_platform.RData`)
+this file was created using
 
 ``` r
 rmarkdown::render("README.Rmd")
