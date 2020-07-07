@@ -5,12 +5,14 @@ output:
     html_preview: false
 params:
   compartment: "biota"
-  series: "Denmark ARH170165 CD Mytilus edulis SB"
+  series: "Denmark M39 CD Mytilus edulis SB"
 ---
 
 ```{r setup, echo=FALSE}
 # stops jittering from looking like a new plot
 set.seed(20342309)
+# load 2019 data
+load("2019/assessment_platform.RData")
 ```
 
 As an example this markdown document has been produced using the
@@ -28,7 +30,7 @@ https://ocean.ices.dk/hhat/
 
 ### how to build this file
 
-this file was created using
+this file was created using (requires access to `assessment_platform.RData`)
 
 ```{r eval = FALSE}
 rmarkdown::render("README.Rmd")
