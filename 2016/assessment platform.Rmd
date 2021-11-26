@@ -1,0 +1,267 @@
+---
+output: 
+  html_document:
+
+params:
+  compartment: must_supply
+  series: must_supply
+---
+
+
+```{r load_packages, include = FALSE}
+require(lattice)
+require(grid)
+require(knitr)
+
+knit_engines$set(asis = function(options) {
+  if (options$echo && options$eval) knit_child(text = options$code)
+})
+options(width = 110)
+```
+
+
+```{r setup_data, echo = FALSE}
+
+#### get key structures ####
+
+assessment_object <- get(paste0(params$compartment, ".web"))
+
+determinands <- assessment_object[["determinands"]]
+
+assessment_object <- assessment_object[["assessment"]]
+
+
+##### get data and assessments in the station / species / determinand group ####
+
+# fileName identifies all timeSeries in same station / species / determinand group
+# convert detGroup to character just to be on safe side!
+
+assessment_object$timeSeries <- within(assessment_object$timeSeries, {
+  detGroup <- as.character(detGroup)
+  fileName <- factor(paste(filePrefix, fileGroup, sep = "_"))
+})
+
+id <- assessment_object$timeSeries[params$series, "fileName"]
+assessment_object <- ctsm.subset.assessment(assessment_object, fileName %in% id)
+
+# sort, using determinands, to ensure everything is in the 'correct' presentational order
+
+assessment_object <- within(assessment_object, {
+  timeSeries <- timeSeries[order(match(timeSeries$determinand, determinands)), ]
+})
+
+
+#### get data, assessment and info for params$series ####
+
+ok <- with(assessment_object$data, seriesID %in% params$series)
+data <- assessment_object$data[ok, ]
+
+assessment <- assessment_object$assessment[[params$series]]
+
+info <- with(assessment_object, c(info, timeSeries[params$series, ]))
+info$group <- unique(as.character(data$group))
+
+# can be multiple matrices for sediment, in which case take most common
+# should only be a single matrix for other compartments
+
+info$matrix <- unique(as.character(data$matrix))
+
+if (params$compartment != "sediment" & length(info$matrix) > 1) 
+  cat("Error: multiple matrices - need to investigate")
+
+if (length(info$matrix > 1)) {
+  wk <- table(as.character(data$matrix))
+  info$matrix <- names(wk[which.max(wk)])
+}
+ 
+
+#### get data, assessment and info for multiplots ####
+
+info_multi <- info
+
+info_multi <- within(info_multi, {
+  seriesID <- row.names(assessment_object$timeSeries)
+  determinand <- as.character(assessment_object$timeSeries$determinand)
+  names(determinand) <- seriesID
+})
+
+# get series names for labelling plots - usually just determinand, but could be more complex if e.g.
+# measured in multiple tissues, or when dealing with biological effects
+
+info_multi$plotNames <- with(info_multi, list(data = determinand, assessment = determinand))
+
+if (any(duplicated(info_multi$plotNames))) {
+  dups <- with(info_multi, duplicated(determinand) | duplicated(determinand, fromLast = TRUE))
+  info_multi$plotNames$data[dups] <- paste(
+    info_multi$determinand, assessment_object$timeSeries$level6name, sep = "\n")[dups]
+  info_multi$plotNames$assessment[dups] <- paste(
+    info_multi$determinand, assessment_object$timeSeries$level6name)[dups]
+  if (any(duplicated(info_multi$plotNames$data))) 
+    cat("Error: duplicate plotting names - need to extend coding")
+}
+  
+info_multi$matrix <- with(assessment_object$data, tapply(matrix, seriesID, function(x) {
+  out <- table(as.character(x))
+  names(out[which.max(out)])
+}))
+
+info_multi <- within(info_multi, {
+  group <- get.info("determinand", determinand, "group", compartment)
+  group <- as.character(group)
+})
+
+```
+
+
+### Assessment plots and statistical analysis {.tabset}
+
+Will put some introductory text here, including summary information about the time series, including: 
+
+* station name
+* latitude and longitude
+* region
+* MSTAT
+* compartment
+* determinand
+* units
+* species (if biota)
+* matrix
+* extraction date
+
+<br>
+
+#### Assessment plot
+
+```{r assessment_plot, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 9, fig.height = 7}
+plot.data(data, assessment, info, type = "assessment", xykey.cex = 1.4)
+```
+
+
+#### Trend with data
+
+```{r data_plot, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 9, fig.height = 7}
+plot.data(data, assessment, info, type = "data", xykey.cex = 1.4)
+```
+
+
+#### Auxiliary data
+
+```{r, include = FALSE}
+ok <- params$compartment %in% c("biota", "sediment")
+```
+
+```{asis, eval = !ok}
+<br> 
+No auxiliary variables currently plotted.
+```
+
+```{r auxiliary_data, eval = ok, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 9, fig.height = 7}
+plot.auxiliary(data, info, xykey.cex = 1.2)
+```
+
+
+#### Assessments (related compounds)
+
+```{r, include = FALSE}
+ok <- ! info$detGroup %in% "Imposex"
+```
+
+```{asis, eval = !ok}
+<br> 
+No related compounds assessed.
+```
+
+```{r multi_assessment, eval = ok, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 9, fig.height = 7}
+plot.multiassessment(
+  assessment_object$data, assessment_object$assessment, info_multi, type = "assessment")
+```
+
+
+#### Data (related compounds)
+
+```{r, include = FALSE}
+ok <- ! info$detGroup %in% "Imposex"
+```
+
+```{asis, eval = !ok}
+<br> 
+No related compounds assessed.
+```
+
+```{r multi_data, eval = ok, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 9, fig.height = 7}
+plot.multidata(assessment_object$data, info_multi)
+```
+
+
+#### Statistical analysis
+
+<br>
+
+**Trend assessment**
+
+```{r trend_ok, include = FALSE}
+anova <- assessment$anova
+coefficients <- assessment$coefficients
+if (info$detGroup == "Imposex") {
+  anova_ok <- !is.null(coefficients) | !is.null(anova)
+} else {
+  anova_ok <- !is.null(anova) && nrow(anova) > 1
+}  
+```
+
+
+```{asis, eval = !anova_ok}
+Insufficient data
+<br>
+```
+
+```{r, eval = anova_ok & info$detGroup != "Imposex", child = "assessment platform trend.Rmd"}
+```
+
+```{r, eval = anova_ok & info$detGroup == "Imposex", child = "assessment platform trend imposex.Rmd"}
+```
+
+<br>
+
+**Status assessment**
+
+```{r status_ok, include = FALSE}
+
+if (info$detGroup == "Imposex") {
+  nyear <- assessment$summary$clLY
+  nyear_ok <- !is.na(nyear)    
+} else {
+  nyear <- assessment$summary$nyfit
+  nyear_ok <- !is.null(nyear) && nyear >= 3
+}
+
+AC_ok <- !all(is.na(assessment$AC))
+status_ok <- nyear_ok && AC_ok
+
+if (!nyear_ok) {
+  status_txt <- "Insufficient data"
+} else if (!AC_ok) {
+  status_txt <- "No assessment criteria"
+}
+```
+
+```{asis, eval = !status_ok}
+`r status_txt`
+<br>
+```
+
+```{r, eval = status_ok & info$detGroup != "Imposex", child = "assessment platform status.Rmd"}
+```
+
+```{r, eval = status_ok & info$detGroup == "Imposex", child = "assessment platform status imposex.Rmd"}
+```
+
+
+```{r tidy_up, include = FALSE}
+rm(list = intersect(
+  objects(), 
+  c("AC_ok", "anova", "anova_ok", "assessment", "assessment_object", "change_txt", "coefficients",
+    "contrasts", "data", "determinands", "diff_txt", "dups", "good_status", "id", "info", "info_multi", 
+    "is_lognormal", "nyear", "nyear_ok", "ok", "p_txt", "pred", "rv", "status_ok", "wk")
+))
+```
