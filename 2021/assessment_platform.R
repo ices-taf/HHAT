@@ -12,7 +12,7 @@ load("assessment_platform.RData")
 render(
   output_file = paste(gsub(" ", "_", series), "__", gsub(" ", "_", compartment), "__2021", ".html", sep = ""),
   output_dir = "html",
-  "assessment platform.Rmd",
+  "assessment_platform.Rmd",
   params = list(
     compartment = compartment,
     series = series
