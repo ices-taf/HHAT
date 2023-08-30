@@ -10,7 +10,7 @@ compartment <- commandArgs(trailingOnly = TRUE)[2]
 load("assessment_platform.RData")
 
 render(
-  output_file = paste(gsub(" ", "_", series), "__", gsub(" ", "_", compartment), "__2019", ".html", sep = ""),
+  output_file = paste(gsub(" ", "_", series), "__", gsub(" ", "_", compartment), "__2011", ".html", sep = ""),
   output_dir = "html",
   "assessment platform.Rmd",
   params = list(
